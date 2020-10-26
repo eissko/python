@@ -1,0 +1,4 @@
+.private
+.config.py
+.config.yaml
+.*config.*
