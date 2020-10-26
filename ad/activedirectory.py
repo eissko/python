@@ -5,8 +5,6 @@ from ldap3 import Server, Connection, SUBTREE, SIMPLE, SYNC, ALL, SASL, NTLM
 import yaml
 config = yaml.safe_load(open(".config.yml"))
 
-
-
 # define the server and the connection
 s = Server(config['server'], get_info=ALL)
 c = Connection(s, user=config['username'], password=config['password'], authentication=NTLM)
@@ -23,7 +21,6 @@ c.search(search_base = config['search_base'],
          paged_size = 1)
 
 for entry in c.response:
-    if 'dn' in entry:
+    if entry['type'] == 'searchResEntry':
         print(entry)
-    else:
-        print(entry)
+
