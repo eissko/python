@@ -7,10 +7,11 @@ from ldap3 import Server, Connection, SUBTREE, SIMPLE, SYNC, ALL, SASL, NTLM, MO
 def connect_toldap(server,username,password):
     srv = Server(server, port = 636, use_ssl = True, get_info=ALL)
     conn = Connection(srv, user=username, password=password, authentication=NTLM)
+
     if conn.bind() is None:
-        print('Error in bind:', conn.result['description'])
-        return None # todo raise error with exception from conn.result
-    print('LDAP connect result:', conn.result['description'])
+        print('ERROR - LDAP connection failed with {}'.format(conn.result['description']))
+        return None
+    print('INFO - LDAP connection status is {}'.format(conn.result['description']))
     return conn
     
 
@@ -36,6 +37,7 @@ def search_computer(conn,search_base,instance_id)->str:
     computer_suffix = get_computer_suffix(instance_id)
     other_telephone = instance_id
     search_filter = f'(&(objectClass={object_class})(|(CN=*{computer_suffix})(OtherTelephone={other_telephone})))'
+    print('INFO - REQ_SEARCH_COMPUTER: {}'.format(search_filter))
     conn.search(search_base,
             search_filter = search_filter,
             search_scope = SUBTREE,
@@ -45,39 +47,35 @@ def search_computer(conn,search_base,instance_id)->str:
     search_response = [entry for entry in conn.response if entry['type'] in 'searchResEntry']
 
     if not search_response:
-        print(f'Computer with suffix \'{computer_suffix}\' was not found in ldap directory')
+        print(f'WARN - RES_SEARCH_COMPUTER: NOT FOUND')
         return None
     if len(search_response) > 1 :
-        raise NameError(f'Ambiguity - multiple computers with suffix {computer_suffix} found!!!')
+        raise NameError(f'Error: Ambiguity multiple computers with the same suffix {computer_suffix}')
 
     computer_dn = search_response[0]['dn']
-    print(f'Computer with suffix {computer_suffix} succesfully found. Returning {computer_dn}')
+    print(f'INFO - RES_SEARCH_COMPUTER: found {computer_dn}')
     return computer_dn
 
 def delete_computer(conn,dn: str):
-    # todo - add validation for DN
-    print("Deleting: ", dn)
-    print(type(conn.delete(dn)))
-    delete_result = conn.result
-    print(delete_result['description'])
-    if delete_result['description'] in 'success':
-        print(f'Deleted: {dn}')
+    print(f'INFO - REQ_DELETE_COMPUTER: {dn}')
+    conn.delete(dn)
+    if conn.result['result'] == 0:
+        print('INFO - RES_DELETE_COMPUTER: {}'.format(conn.result['description']))
+    else:
+        print('INFO - RES_DELETE_COMPUTER: {}'.format(conn.result['description']))
 
 def create_computer(conn,dn):
     object_class = ['computer']
+    print(f'INFO - REQ_CREATE_COMPUTER: {dn}')
     conn.add(dn, object_class, {'userAccountControl':'544'})
+    print('INFO - RES_CREATE_COMPUTER: {} '.format(conn.result['description']))
+
 
 def is_valid_id(instance_id) ->bool:
     m = re.match(r"^i-[a-z0-9A-Z]{17}$", instance_id)
     if m is None:
-        print(f'Instance ID {instance_id} is in wrong format')
         return False
-    print(f'Instance ID {m.group()} is in correct format')
     return True
-
-result = is_valid_id("i-1234567890abcdef0")
-if(result):
-    print('Only positive news :)')
 
 def disable_computer(conn,dn: str):
     print("disabling computer")
