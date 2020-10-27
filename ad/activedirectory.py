@@ -58,10 +58,10 @@ def delete_computer(conn,dn: str):
     # todo - add validation for DN
     print("Deleting: ", dn)
     print(type(conn.delete(dn)))
-    print(conn)
-   # print(delete_result['description'])
-    # if delete_result['description'] in 'success':
-    #    print(f'Deleted: {dn}')
+    delete_result = conn.result
+    print(delete_result['description'])
+    if delete_result['description'] in 'success':
+        print(f'Deleted: {dn}')
 
 def create_computer(conn,dn):
     object_class = ['computer']
