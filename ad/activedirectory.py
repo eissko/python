@@ -6,12 +6,12 @@ from ldap3 import Server, Connection, SUBTREE, SIMPLE, SYNC, ALL, SASL, NTLM, MO
 # define the server and the connection
 def connect_toldap(server,username,password):
     srv = Server(server, port = 636, use_ssl = True, get_info=ALL)
+    print('INFO - REQ_CONN_LDAP: {}'.format(srv))
     conn = Connection(srv, user=username, password=password, authentication=NTLM)
-
-    if conn.bind() is None:
-        print('ERROR - LDAP connection failed with {}'.format(conn.result['description']))
-        return None
-    print('INFO - LDAP connection status is {}'.format(conn.result['description']))
+    conn.bind()
+    if conn.result['result'] != 0:
+        raise NameError('ERROR - LDAP connection failed with message \'{}\''.format(conn.result['description']))
+    print('INFO - RES_CONN_LDAP: {}'.format(conn.result))
     return conn
     
 
@@ -43,14 +43,13 @@ def search_computer(conn,search_base,instance_id)->str:
             search_scope = SUBTREE,
             attributes = ['cn', 'distinguishedName','OtherTelephone'],
             size_limit = 2) # search for more than 1 occurance suffix, if found then raise error
-    
     search_response = [entry for entry in conn.response if entry['type'] in 'searchResEntry']
 
     if not search_response:
         print(f'WARN - RES_SEARCH_COMPUTER: NOT FOUND')
         return None
     if len(search_response) > 1 :
-        raise NameError(f'Error - ambiguous computers with the same suffix \'{computer_suffix}\'')
+        raise NameError(f'Error - ambiguity returned by filter \'{search_filter}\'')
 
     computer_dn = search_response[0]['dn']
     print(f'INFO - RES_SEARCH_COMPUTER: found {computer_dn}')
@@ -75,7 +74,7 @@ def create_computer(conn,dn):
 def is_valid_id(instance_id) ->bool:
     m = re.match(r"^i-[a-z0-9A-Z]{17}$", instance_id)
     if m is None:
-        return False
+        raise NameError(f'Instance ID \'{instance_id}\' is in wrong format')
     return True
 
 def disable_computer(conn,dn: str):
@@ -99,33 +98,35 @@ config      = yaml.safe_load(open(".config.yml"))
 server      = config['server']
 username    = config['username']
 password    = config['password']
+password_wrong = config['password_wrong']
 search_base = config['search_base']
-instance_id = config['computer_name']
+instance_id = config['instance_id']
 computer_dn = config['computer_dn']
+computer_dn2 = config['computer_dn2']
 
+# scenarion 0 - start ldap connection
+conn = connect_toldap(server,username,password)
 
 # scenario 1 - computer does not exist in ldap
-## instance_id = 'asdf'
-
 # scenario 2 - exactly one computer exists with given name (CN) 
+##create_computer(conn,computer_dn)
 
 # scenario 3 - multiple computers exists with the same suffix but different fullname/CN (active directory doesn't support computer object with the same CN)
-
+##create_computer(conn,computer_dn)
+##create_computer(conn,computer_dn2)
 # scenario 4 - ldap connection credentials are wrong
-
+##conn = connect_toldap(server,username,password_wrong)
 # scenario 5 - wrong ldap server URL (or ldap unavailable)
 
 # scenario 6 - wrong tcp port 636 (or ldap unavailable)
 
+# scenario 7 - disable computer
+##disable_computer(conn,computer_dn)
 
-conn = connect_toldap(server,username,password)
 if conn is not None:
-    create_computer(conn,computer_dn)
-    #disable_computer(conn,computer_dn)
     search_result = search_computer(conn,search_base,instance_id)
     if search_result is not None:
         delete_computer(conn,search_result)
 
 # close the connection
 conn.unbind()
-
