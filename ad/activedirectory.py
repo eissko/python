@@ -52,6 +52,7 @@ def search_computer(conn,search_base,instance_id)->str:
         raise NameError(f'Error - computer ambiguity returned by filter \'{search_filter}\'')
 
     computer_dn = search_response[0]['dn']
+    is_valid_dn(computer_dn) # if not valid raise exception
     print(f'INFO - RES_SEARCH_COMPUTER: found {computer_dn}')
     return computer_dn
 
