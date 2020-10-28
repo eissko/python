@@ -50,7 +50,7 @@ def search_computer(conn,search_base,instance_id)->str:
         print(f'WARN - RES_SEARCH_COMPUTER: NOT FOUND')
         return None
     if len(search_response) > 1 :
-        raise NameError(f'Error: Ambiguity multiple computers with the same suffix {computer_suffix}')
+        raise NameError(f'Error - ambiguous computers with the same suffix \'{computer_suffix}\'')
 
     computer_dn = search_response[0]['dn']
     print(f'INFO - RES_SEARCH_COMPUTER: found {computer_dn}')
@@ -63,8 +63,7 @@ def delete_computer(conn,dn: str):
         print('INFO - RES_DELETE_COMPUTER: {}'.format(conn.result['description']))
         return True
     else:
-        print('INFO - RES_DELETE_COMPUTER: {}'.format(conn.result['description']))
-        return False
+        raise NameError('Error - Removal of {} failed with reason {}'.format(dn,conn.result['description']))
 
 def create_computer(conn,dn):
     object_class = ['computer']
