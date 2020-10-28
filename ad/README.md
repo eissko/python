@@ -29,3 +29,9 @@ https://github.com/awslabs/aws-lambda-powertools-python/issues/92
 ```
 https://medium.com/@brettandrews/handling-sqs-partial-batch-failures-in-aws-lambda-d9d6940a17aa
 ```
+
+
+###  SQS examples
+```
+https://docs.aws.amazon.com/lambda/latest/dg/with-sqs-create-package.html
+```
