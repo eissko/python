@@ -61,8 +61,10 @@ def delete_computer(conn,dn: str):
     conn.delete(dn)
     if conn.result['result'] == 0:
         print('INFO - RES_DELETE_COMPUTER: {}'.format(conn.result['description']))
+        return True
     else:
         print('INFO - RES_DELETE_COMPUTER: {}'.format(conn.result['description']))
+        return False
 
 def create_computer(conn,dn):
     object_class = ['computer']
@@ -114,7 +116,7 @@ computer_dn = config['computer_dn']
 
 # scenario 5 - wrong ldap server URL (or ldap unavailable)
 
-# scenario 6 - wronge tcp port 636 (or ldap unavailable)
+# scenario 6 - wrong tcp port 636 (or ldap unavailable)
 
 
 conn = connect_toldap(server,username,password)
