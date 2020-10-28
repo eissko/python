@@ -57,6 +57,7 @@ def search_computer(conn,search_base,instance_id)->str:
 
 def delete_computer(conn,dn: str):
     print(f'INFO - REQ_DELETE_COMPUTER: {dn}')
+    is_valid_dn(dn)
     conn.delete(dn)
     if conn.result['result'] == 0:
         print('INFO - RES_DELETE_COMPUTER: {}'.format(conn.result['description']))
@@ -92,6 +93,16 @@ def rename_computer(conn,dn):
 def move_computer(conn,dn):
     print("moved computer")
 
+def is_valid_dn(dn):
+    """
+    Method validates active directory computer object name where standard name contains only 
+    letters (a-zA-Z), number (0-9), and hyphens (-). No spaces, no dots (.). Max length is 63 characters.
+    :param dn: distinguished name format
+    """
+    m = re.match(r"^CN=[a-zA-Z0-9-]{1,63},(.*)", dn)
+    if m is None:
+        raise NameError(f'DN \'{dn}\' is in wrong format')
+    print(f'DN {dn} is correct format')
 
 
 config      = yaml.safe_load(open(".config.yml"))
@@ -103,6 +114,8 @@ search_base = config['search_base']
 instance_id = config['instance_id']
 computer_dn = config['computer_dn']
 computer_dn2 = config['computer_dn2']
+computer_dn_wrong = config['computer_dn_wrong']
+
 
 # scenarion 0 - start ldap connection
 conn = connect_toldap(server,username,password)
@@ -122,6 +135,12 @@ conn = connect_toldap(server,username,password)
 
 # scenario 7 - disable computer
 ##disable_computer(conn,computer_dn)
+
+# scenario 8 - check dn
+is_valid_dn(computer_dn)
+is_valid_dn(computer_dn2)
+is_valid_dn(computer_dn_wrong)
+
 
 if conn is not None:
     search_result = search_computer(conn,search_base,instance_id)
