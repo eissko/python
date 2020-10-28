@@ -42,14 +42,14 @@ def search_computer(conn,search_base,instance_id)->str:
             search_filter = search_filter,
             search_scope = SUBTREE,
             attributes = ['cn', 'distinguishedName','OtherTelephone'],
-            size_limit = 2) # search for more than 1 occurance suffix, if found then raise error
+            size_limit = 2) # on purpose more than 1 in order to check unambiguity of computer objects
     search_response = [entry for entry in conn.response if entry['type'] in 'searchResEntry']
 
     if not search_response:
         print(f'WARN - RES_SEARCH_COMPUTER: NOT FOUND')
         return None
     if len(search_response) > 1 :
-        raise NameError(f'Error - ambiguity returned by filter \'{search_filter}\'')
+        raise NameError(f'Error - computer ambiguity returned by filter \'{search_filter}\'')
 
     computer_dn = search_response[0]['dn']
     print(f'INFO - RES_SEARCH_COMPUTER: found {computer_dn}')
