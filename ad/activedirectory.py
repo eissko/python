@@ -104,49 +104,50 @@ def is_valid_dn(dn):
     if m is None:
         raise NameError(f'DN \'{dn}\' is in wrong format')
     print(f'DN {dn} is correct format')
+    return True
 
 
-config      = yaml.safe_load(open(".config.yml"))
-server      = config['server']
-username    = config['username']
-password    = config['password']
-password_wrong = config['password_wrong']
-search_base = config['search_base']
-instance_id = config['instance_id']
-computer_dn = config['computer_dn']
-computer_dn2 = config['computer_dn2']
-computer_dn_wrong = config['computer_dn_wrong']
+
+if __name__ == '__main__':
+    config      = yaml.safe_load(open(".config.yml"))
+    server      = config['server']
+    username    = config['username']
+    password    = config['password']
+    password_wrong = config['password_wrong']
+    search_base = config['search_base']
+    instance_id = config['instance_id']
+    computer_dn = config['computer_dn']
+    computer_dn2 = config['computer_dn2']
+    computer_dn_wrong = config['computer_dn_wrong']
+    # scenarion 0 - start ldap connection
+    conn = connect_toldap(server,username,password)
+
+    # scenario 1 - computer does not exist in ldap
+    # scenario 2 - exactly one computer exists with given name (CN) 
+    ##create_computer(conn,computer_dn)
+
+    # scenario 3 - multiple computers exists with the same suffix but different fullname/CN (active directory doesn't support computer object with the same CN)
+    ##create_computer(conn,computer_dn)
+    ##create_computer(conn,computer_dn2)
+    # scenario 4 - ldap connection credentials are wrong
+    ##conn = connect_toldap(server,username,password_wrong)
+    # scenario 5 - wrong ldap server URL (or ldap unavailable)
+
+    # scenario 6 - wrong tcp port 636 (or ldap unavailable)
+
+    # scenario 7 - disable computer
+    ##disable_computer(conn,computer_dn)
+
+    # scenario 8 - check dn
+    is_valid_dn(computer_dn)
+    is_valid_dn(computer_dn2)
+    is_valid_dn(computer_dn_wrong)
 
 
-# scenarion 0 - start ldap connection
-conn = connect_toldap(server,username,password)
+    if conn is not None:
+        search_result = search_computer(conn,search_base,instance_id)
+        if search_result is not None:
+            delete_computer(conn,search_result)
 
-# scenario 1 - computer does not exist in ldap
-# scenario 2 - exactly one computer exists with given name (CN) 
-##create_computer(conn,computer_dn)
-
-# scenario 3 - multiple computers exists with the same suffix but different fullname/CN (active directory doesn't support computer object with the same CN)
-##create_computer(conn,computer_dn)
-##create_computer(conn,computer_dn2)
-# scenario 4 - ldap connection credentials are wrong
-##conn = connect_toldap(server,username,password_wrong)
-# scenario 5 - wrong ldap server URL (or ldap unavailable)
-
-# scenario 6 - wrong tcp port 636 (or ldap unavailable)
-
-# scenario 7 - disable computer
-##disable_computer(conn,computer_dn)
-
-# scenario 8 - check dn
-is_valid_dn(computer_dn)
-is_valid_dn(computer_dn2)
-is_valid_dn(computer_dn_wrong)
-
-
-if conn is not None:
-    search_result = search_computer(conn,search_base,instance_id)
-    if search_result is not None:
-        delete_computer(conn,search_result)
-
-# close the connection
-conn.unbind()
+    # close the connection
+    conn.unbind()
